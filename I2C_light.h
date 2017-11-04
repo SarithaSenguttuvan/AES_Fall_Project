@@ -2,7 +2,7 @@
  * @file 
  *		I2C_light.h 
  * @brief 
- *		This file contains function declarations for register access of theh light temperature - APDS_9301
+ *		This file contains function declarations for register access of the light temperature - APDS_9301
  *		 
  * @author 
  *		Saritha Senguttuvan, Savitha Senguttuvan

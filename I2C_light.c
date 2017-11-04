@@ -1,3 +1,15 @@
+/**
+ * @file 
+ *		I2C_light.c 
+ * @brief 
+ *		This file contains function definitions for register access of the light sensor - APDS_9301
+ *		 
+ * @author 
+ *		Saritha Senguttuvan, Savitha Senguttuvan
+ * @date 
+ *		Nov 4,2017
+ *
+ */
 #include <linux/i2c-dev.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
