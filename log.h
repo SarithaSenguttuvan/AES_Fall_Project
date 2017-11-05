@@ -5,46 +5,66 @@
  *      Author: Saritha Senguttuvan, Savitha Senguttuvan
  */
 
-#ifndef INCLUDES_LOGGER_QUEUE_H_
-#define INCLUDES_LOGGER_QUEUE_H_
-#include <stdlib.h>
+#ifndef INCLUDES_LOGGER_TASK_H_
+#define INCLUDES_LOGGER_TASK_H_
+
+#include <pthread.h>
 #include <stdint.h>
 
 #define LOG_ITEM(data)		log_item(data)
 
-#define MAIN_LOG_ID 1
-#define TEMPERATURE_LOG_ID 2
-#define LIGHT_LOG_ID 3
-#define LOGGER_LOG_ID 4
-typedef enum
-{
-	LOGGER_HEARTBEAT,
-	LOGGER_ INITIALZED,
-	LOGGER_ERROR,
-	LOGGER_DATA_REQ
-} LOGGER_level;
+pthread_cond_t cond_log;
 
+pthread_mutex_t log_mtx;
+
+struct sigaction mq_logTask_sa;
+
+struct sigevent mq_logTask_notify;
+
+/* Enum for the logger level */
+typedef enum
+{	
+	LOG_FATAL,
+	LOG_ERROR,
+	LOG_DEBUG,
+	LOG_WARN,
+	LOG_INFO
+}LOGGER_level;
 
 /* Structure for log packets */
-typedef struct 							/* Log structure */
+typedef struct 						/* Log structure */
 {
-	LOGGER_level log_id; 				/* Log type */
-	uint8_t src_log_id; 				/* Source Task ID */
-	uint8_t log_len;					/* Log length  */
-	uint32_t log_timestamp; 			/* Time */
-	uint8_t * log_payload; 				/* Log associated data */
-} log_t;
+	LOGGER_level logLevel; 			/* Log type */
+	uint32_t log_timestamp; 		/* Time */
+	size_t logPayloadLen;			/* Log length  */
+	void * logPayload; 				/* Log associated data */
+}log_t;
+
+/**
+ * @brief 
+ * 		This function is the pthread function for the log task
+ * @return 
+ *      void
+ */
+void *logTaskFunc(void *arg);
+
+/**
+ * @brief 
+ * 		This function is used to receive logs to the log queue
+ * @return 
+ *      void
+ */
+uint8_t receive_log();
+
+/**
+ * @brief 
+ * 		This is a function handler for the log task
+ * @return 
+ *      void
+ */
+void logTask_handler(int signum);
 
 #if 0
-/* Structure for data packets */
-typedef struct 							/* Msg structure */
-{
-	uint8_t src_msg_id; 				/* Source Task ID */
-	uint8_t log_len;						/* Log length  */
-	uint8_t * msg_payload; 				/* Msg associated data */
-} msg_t;
-
-#endif
 
 /**
  * @brief
@@ -76,47 +96,6 @@ void log_raw_string(uint8_t * str);
  */
 void log_raw_int(int32_t int_data);
 
-#if 0
-/**
- * @brief 
- * 		This function is used to clear the log data
- * @return 
- *      void
- */
- 
- #endif
-void log_flush();
-
-/**
- * @brief 
- * 		This function is used to send logs to the log queue
- * @param 
-
- *		log_data - holds the log packet of type log_t
- * @return 
- *      void
- */
-LOGGER_level send_log(log_t log_data);
-
-/**
- * @brief 
- * 		This function is used to check logs and parse the message
- * @param 
- *		log_data - holds the log packet of type log_t
- * @return 
- *      void
- */
-LOGGER_level read_log(log_t log_data);
-
-/**
- * @brief 
- * 		This function is used to send message requests
- * @param 
- *		task_id - ID of the task to which the request is to be sent
- * @return 
- *      void
- */
-LOGGER_level msg_req(uint8_t task_id);
-
+#endif
 
 #endif /* INCLUDES_LOGGER_QUEUE_H_ */
