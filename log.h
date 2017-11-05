@@ -13,12 +13,7 @@
 
 #define LOG_ITEM(data)		log_item(data)
 
-pthread_cond_t cond_log;
-
-pthread_mutex_t log_mtx;
-
-struct sigaction mq_logTask_sa;
-
+/* Signal event structure for notifying the message queues */
 struct sigevent mq_logTask_notify;
 
 /* Enum for the logger level */

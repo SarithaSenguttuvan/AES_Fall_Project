@@ -14,36 +14,6 @@
 
 mqd_t qdes_mainTask;
 
-/* Defining my owm handler to handle the system signals */
-void mainTask_handler(int signum)
-{
-	int8_t rc = 0;
-    mainSigNo = signum;
-    printf("mainTask_handler::Signal number is %d : %ld\n", mainSigNo, syscall(SYS_gettid));
-	if(signum == SIGMAIN)
-	{
-    	printf("mainTask_handler::Received SIGMAIN\n");
-		if(mq_notify (qdes_mainTask, &mq_mainTask_notify) == -1)							
-		{
-			printf("mainTask_handler::Error Registering Notify SIGMAIN: %d\n", errno);
-		    if(errno == EBUSY)
-		    	printf("mainTask_handler::Another process has registered for notifications using SIGMAIN.\n");
-		}      	
-    }
-	else if(signum == SIGTIMER)
-	{
-    	printf("mainTask_handler::Received SIGTIMER\n");    	
-    }
-     
-    rc = pthread_cond_signal(&cond_main);                    			/* Main task handler sends the condition signal */   
-    if (rc) 
-    {
-    	printf("mainTask_handler::ERROR: pthread_cond_signal() rc is %d\n", rc);             
-    }   
-    
-    printf("mainTask_handler::Condition Variable Signaled\n"); 
-}
-
 /*main task that spawns others tassks*/
 int main()
 {
@@ -59,18 +29,6 @@ int main()
 	blockSignals(0);
 	msgStruct_t *read_queue = (msgStruct_t *)malloc(sizeof(msgStruct_t));
 	
-
-    rc = pthread_cond_init(&cond_main, NULL);           /* initializing the pthread condition variable */
-    if(rc)
-    	printf("main::condition init error\n");	
-	rc = pthread_mutex_init(&main_mtx, NULL);        /* Set default protocol for mutex */
-    if(rc)
-        printf("main::Mutex init in Main task error\n");
-
-	/* Timer config */      
-    timer_sa.sa_handler = mainTask_handler;	
-	//sigaction(SIGTIMER, &timer_sa, NULL);  /* Registering the signals */
-
 	mq_mainTask_notify.sigev_notify = SIGEV_SIGNAL;						
 	mq_mainTask_notify.sigev_signo = SIGMAIN;
 	    
@@ -95,9 +53,6 @@ int main()
     	printf("main::ERROR number in opening the main task queue is %d\n", errno);
     } 
 	printf("main::Main task message queue opened\n");	
-	
-    mq_mainTask_sa.sa_handler = mainTask_handler; /* Assigning the signal handler function */
-    //sigaction(SIGMAIN, &mq_mainTask_sa, NULL);  /* Registering the signals */ 
 
     if(mq_notify (qdes_mainTask, &mq_mainTask_notify) == -1)							
     {
@@ -196,7 +151,7 @@ int main()
     //send_light_req(MAIN_TASK_ID);
 	msgStruct_t *HB_req = (msgStruct_t *)malloc(sizeof(msgStruct_t));    
 
-	/* Set the Timer */
+	/* Start the Timer */
     if (timer_settime(timerid, 0, &its, NULL) == -1)
          printf("main::ERRROR: timer_settime\n");
          	
@@ -204,10 +159,7 @@ int main()
 	{	
 				
 		printf("main::Waiting for pthread condition signal from the main task handler\n");
-        
-        //rc = pthread_cond_wait(&cond_main, &main_mtx);                      /* Pthread waits for a condition, and releases the mutex until condition ha met */
-        /*if(rc)
-            printf("main::Main task pthread_cond_wait error\n");*/
+
 		recvSig = unblockOnSignal(MAIN_TASK_ID);   
         printf("main:::Received Signal after Sigwait:%d\n", recvSig);
         
@@ -227,6 +179,7 @@ int main()
 				if(errno == EBUSY)
 					printf("main::Another process has registered for notifications using SIGMAIN.\n");
 			} 	
+			printf(" main()::^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Before do while **********\n");
 			do
 			{
 				printf("main::Entering to read message\n");
@@ -287,11 +240,6 @@ int main()
     	printf("ERROR No: %d Unable to close the main queue \n", errno);
     }	
     
-    rc = pthread_cond_destroy(&cond_main);       /* Destory the condition variable */
-    if (rc) 
-    {
-        printf("ERROR; pthread_cond_destroy() rc is %d\n", rc); 
-    }
 	return 0;	
 }
 

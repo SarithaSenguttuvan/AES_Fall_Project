@@ -4,15 +4,7 @@
 #define INCLUDES_TEMP_QUEUE_H_
 #include "generic.h"
 
-pthread_cond_t cond_temp;
-
-pthread_mutex_t temp_mtx;
-
-struct sigaction mq_tempTask_sa;
-
 struct sigevent mq_tempTask_notify;
-struct sigaction mq_tempTask_sa;
-
 /**
  * @brief 
  * 		This function is the pthread function for the temperature task

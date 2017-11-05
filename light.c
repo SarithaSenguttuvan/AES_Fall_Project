@@ -6,31 +6,6 @@
 #include "generic.h"
 
 mqd_t qdes_loc_lightTask;
-
-
-
-void lightTask_handler(int signum)
-{
-	int8_t rc = 0;
-    printf("lightTask_handler::Light Task Signal Handler:%d : %ld\n",signum, syscall(SYS_gettid));
-	if(signum == SIGLIGHT)
-	{
-    	printf("lightTask_handler::Received SIGLIGHT\n");
-		if(mq_notify (qdes_loc_lightTask, &mq_lightTask_notify) == -1)							/////////////////////////////////////////////
-		{
-			printf("lightTask_handler::The error number in mq_notify in the Light Task is %d\n", errno);
-		    if(errno == EBUSY)
-		            printf("lightTask_handler::Another process has registered for notifications in Light task\n");
-		}
-		rc = pthread_cond_signal(&cond_light);                    			/* Main task handler sends the condition signal */   
-		if (rc) 
-		{
-			printf("lightTask_handler::ERROR in Light task: pthread_cond_signal() rc is %d\n", rc); 
-		}   
-		printf("lightTask_handler::Cond Signaled\n");
-    }
-    return;
-}
 	
 /* Function call to send the light data */
 uint8_t send_light_msg(uint8_t destTaskId, msgStruct_t * light_msg)
@@ -84,13 +59,7 @@ void *lightTaskFunc(void *arg)
 	printf("lightTaskFunc::In the Light task function\n");
 	int8_t rc = 0;	
 	int8_t n = 0;	
-	int32_t recvSig = 0;
-	
-    mq_lightTask_sa.sa_handler = lightTask_handler; /* Assigning the signal handler function */
-    //sigaction(SIGLIGHT, &mq_lightTask_sa, NULL);  /* Registering the signals */ 
-    rc = pthread_cond_init(&cond_light, NULL);           /* initializing the pthread condition variable */
-    if(rc)
-    	printf("lightTaskFunc::light():condition init error\n");	
+	int32_t recvSig = 0;   
     	
 	mq_lightTask_notify.sigev_notify = SIGEV_SIGNAL;						//////////////////////////////////////////////////////
 	mq_lightTask_notify.sigev_signo = SIGLIGHT;
@@ -119,8 +88,7 @@ void *lightTaskFunc(void *arg)
 	msgStruct_t *read_light_msg_queue = (msgStruct_t *)malloc(sizeof(msgStruct_t));
 	msgStruct_t *light_msg = (msgStruct_t *)malloc(sizeof(msgStruct_t));
 	msgStruct_t *HB_main = (msgStruct_t *)malloc(sizeof(msgStruct_t));	
-	//send_heartBeat(LIGHT_TASK_ID);
-	
+
 	blockSignals(0);
 	
 	while(1)
@@ -176,11 +144,7 @@ void *lightTaskFunc(void *arg)
     {
         printf("ERROR No: %d Unable to unlink the light queue \n", errno);
     } 
-    rc = pthread_cond_destroy(&cond_light);       /* Destory the condition variable */
-    if (rc) 
-    {
-        printf("ERROR; pthread_cond_destroy() rc is %d\n", rc); 
-    }
+
 	free(lightLog);
 	pthread_exit(NULL);
 }

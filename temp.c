@@ -6,30 +6,6 @@
 
 mqd_t qdes_loc_tempTask;
 
-
-void tempTask_handler(int signum)
-{
-	int8_t rc = 0;
-    printf("tempTask_handler::Temperature Task Signal Handler%d : %d\n",signum, syscall(SYS_gettid));
-	if(signum == SIGTEMP)
-	{
-    	printf("tempTask_handler::In SIGTEMP Handler\n");
-		if(mq_notify (qdes_loc_tempTask, &mq_tempTask_notify) == -1)							/////////////////////////////////////////////
-		{
-			printf("tempTask_handler::The error number in mq_notify in the Temperature Task is %d\n", errno);
-		    if(errno == EBUSY)
-		            printf("tempTask_handler::Another process has registered for notifications in Temperature task\n");
-		}
-		rc = pthread_cond_signal(&cond_temp);                    			/* Temp task handler sends the condition signal */   
-		if (rc) 
-		{
-			printf("tempTask_handler::ERROR in Temp task: pthread_cond_signal() rc is %d\n", rc); 
-		}   
-		printf("tempTask_handler::Cond Signaled\n");
-    }
-    return;
-}
-
 /* Function call to send the temperature data */
 uint8_t send_temp_msg(uint8_t destTaskId, msgStruct_t *temp_msg)
 {
@@ -86,11 +62,8 @@ void *tempTaskFunc(void *arg)
 	printf("tempTaskFunc::In the Temperature task function\n");
 	int8_t n = 0;
 	int32_t recvSig = 0;
-		
-    mq_tempTask_sa.sa_handler = tempTask_handler; /* Assigning the signal handler function */
-    //sigaction(SIGTEMP, &mq_tempTask_sa, NULL);  /* Registering the signals */ 
 
-	mq_tempTask_notify.sigev_notify = SIGEV_SIGNAL;						//////////////////////////////////////////////////////
+	mq_tempTask_notify.sigev_notify = SIGEV_SIGNAL;						
 	mq_tempTask_notify.sigev_signo = SIGTEMP;
 
 	if((qdes_loc_tempTask = mq_open(TEMP_TASK_MQ_NAME, O_NONBLOCK | O_RDONLY)) == (mqd_t)-1) 
@@ -98,7 +71,7 @@ void *tempTaskFunc(void *arg)
     	printf ("tempTaskFunc::ERROR No: %d Unable to open Temperature task\n", errno);
     }
     	
-    if(mq_notify (qdes_loc_tempTask, &mq_tempTask_notify) == -1)							/////////////////////////////////////////////
+    if(mq_notify (qdes_loc_tempTask, &mq_tempTask_notify) == -1)						
     {
     	printf("tempTaskFunc::The error number in mq_notify in the temperature Task is %d\n", errno);
         if(errno == EBUSY)
@@ -126,7 +99,7 @@ void *tempTaskFunc(void *arg)
 	   	recvSig = unblockOnSignal(TEMP_TASK_ID);   
         printf("tempTaskFunc::Received Signal after Sigwait:%d\n", recvSig);	
         
-        if(mq_notify (qdes_loc_tempTask, &mq_tempTask_notify) == -1)							/////////////////////////////////////////////
+        if(mq_notify (qdes_loc_tempTask, &mq_tempTask_notify) == -1)						
 		{
 			printf("tempTask_handler::The error number in mq_notify in the Temperature Task is %d\n", errno);
 		    if(errno == EBUSY)
@@ -143,13 +116,11 @@ void *tempTaskFunc(void *arg)
 			} 
 			else
 			{
-				if(read_temp_msg_queue->msgId == MSGID_TEMP_REQ)												////////////////////////////////
+				if(read_temp_msg_queue->msgId == MSGID_TEMP_REQ)												
 				{
-					//printf("=) Temperature Req MSG: The Source task ID for the temperature message queue is %d\n",(read_temp_msg_queue->msgSrcTask));
-					//printf("=) Temperature Req MSG: The src_message_id for the temperature message queue is %d\n",(read_temp_msg_queue->msgId));
 					send_temp_msg(read_temp_msg_queue->msgSrcTask, temp_msg);
 				}
-				else if(read_temp_msg_queue->msgId == MSGID_HB_REQ)												////////////////////////////////
+				else if(read_temp_msg_queue->msgId == MSGID_HB_REQ)												
 				{
 					send_heartBeat(TEMP_TASK_ID,HB_main);				
 				}

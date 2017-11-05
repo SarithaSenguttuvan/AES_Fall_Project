@@ -55,9 +55,6 @@ struct mq_attr light_queue_attr;
 
 #define SIGNALMASK 0
 
-
-
-
 /* Enum for type of message i.e., Message ID */
 typedef enum
 {
@@ -143,6 +140,7 @@ void tempTask_handler(int signum);
 void blockSignals(int taskID);
 
 int32_t unblockOnSignal(int taskID);
+
 #endif
 
 

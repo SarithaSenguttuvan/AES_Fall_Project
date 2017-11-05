@@ -7,30 +7,6 @@
 
 mqd_t qdes_loc_logTask;
 
-	
-/* Defining my owm handler to handle the system signals */
-void logTask_handler(int signum)
-{
-	int8_t rc = 0;
-    printf("logTask_handler::Log Task Signal Handler%d : %ld\n",signum, syscall(SYS_gettid));
-	if(signum == SIGLOG)
-	{
-    	printf("logTask_handler::Received SIGLOG signal in the Log task\n");
-		if(mq_notify (qdes_loc_logTask, &mq_logTask_notify) == -1)							/////////////////////////////////////////////
-		{
-			printf("logTask_handler::The error number in mq_notify in the Log Task is %d\n", errno);
-		    if(errno == EBUSY)
-		            printf("logTask_handler::Another process has registered for notifications.\n");
-		}
-		rc = pthread_cond_signal(&cond_log);                    			/* Log task handler sends the condition signal */   
-		if (rc) 
-		{
-			printf("logTask_handler::ERROR in Log task: pthread_cond_signal() rc is %d\n", rc); 
-		}   
-		printf("logTask_handler::Cond Signaled\n");
-    } 
-    return;
-}
 
 /* Start routine for the Log Task */
 void *logTaskFunc(void *arg)
@@ -44,7 +20,7 @@ void *logTaskFunc(void *arg)
 	log_t *read_log_queue = (log_t *)malloc(sizeof(log_t));
 	msgStruct_t *read_msg_queue = (msgStruct_t *)malloc(sizeof(msgStruct_t));
 	
-	mq_logTask_sa.sa_handler = logTask_handler; /* Assigning the signal handler function */
+	//mq_logTask_sa.sa_handler = logTask_handler; /* Assigning the signal handler function */
     //sigaction(SIGLOG, &mq_logTask_sa, NULL);  /* Registering the signals */ 
 
 	mq_logTask_notify.sigev_notify = SIGEV_SIGNAL;						
@@ -62,10 +38,7 @@ void *logTaskFunc(void *arg)
                 printf("logTaskFunc::Another process has registered for notifications.\n");
     }
 	msgStruct_t *HB_main = (msgStruct_t *)malloc(sizeof(msgStruct_t));	
-    rc = pthread_cond_init(&cond_log, NULL);           /* initializing the pthread condition variable */
-    if(rc)
-    	printf("logTaskFunc::condition init error\n");	
-	
+
 	blockSignals(0);
 	
 	while(1)

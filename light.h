@@ -4,13 +4,7 @@
 #define INCLUDES_LIGHT_QUEUE_H_
 #include "generic.h"
 
-pthread_cond_t cond_light;
-
-struct sigaction mq_lightTask_sa;
-
 struct sigevent mq_lightTask_notify;
-
-pthread_mutex_t light_mtx;
 
 /**
  * @brief 
