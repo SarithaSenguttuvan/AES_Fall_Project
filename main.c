@@ -191,7 +191,7 @@ int main(int argc, char *argv[])
         if(recvSig == SIGTIMER)			/* If timer elapses */
         {
         	
-        	send_hb_req(HB_req, qdes_logTask, qdes_tempTask, qdes_lightTask);        	       	
+        	//send_hb_req(HB_req, qdes_logTask, qdes_tempTask, qdes_lightTask);        	       	
         	printf("main::Inside SigTimer IF block\n");
        		if(log_flag == true && temp_flag == true && light_flag == true)			/* If heartbeats received from all tasks */
             {
