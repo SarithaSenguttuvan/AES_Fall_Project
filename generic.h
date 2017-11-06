@@ -10,6 +10,7 @@
 #include <sys/sysinfo.h>
 #include <semaphore.h>
 #include <signal.h>
+#include <time.h>
 #include "log.h"
 
 #include <sys/types.h>
@@ -51,7 +52,8 @@ struct mq_attr log_queue_attr;
 struct mq_attr temp_queue_attr;
 struct mq_attr light_queue_attr;
 
-/* Message queue Sigaction */
+/* Mutex resource */
+pthread_mutex_t generic_mutex;
 
 #define SIGNALMASK 0
 
@@ -89,7 +91,7 @@ pthread_mutex_t rsrcA;
  * @return 
  *      uint8_t
  */
-uint8_t send_log(uint8_t srcTaskId, log_t* logPacket);		//Frame the message of type msgStruct_t in this function
+uint8_t send_log(uint8_t srcTaskId, log_t* logPacket, msgStruct_t *msg, mqd_t msg_qdes);		//Frame the message of type msgStruct_t in this function
 
 
 /**
@@ -101,13 +103,13 @@ uint8_t send_log(uint8_t srcTaskId, log_t* logPacket);		//Frame the message of t
  * @return 
  *      uint8_t
  */
-uint8_t send_heartBeat(int8_t srcTaskId, msgStruct_t *HB_main);
+uint8_t send_heartBeat(int8_t srcTaskId, msgStruct_t *HB_main, mqd_t mq_des_hb_resp);
 
-uint8_t send_hb_req();
+uint8_t send_hb_req(msgStruct_t * HB_req, mqd_t qdes_req_hb_log, mqd_t qdes_req_hb_temp, mqd_t qdes_req_hb_light);
 
-uint8_t send_light_req(uint8_t srcTaskId);
+uint8_t send_light_req(uint8_t srcTaskId, msgStruct_t *light_req, mqd_t qdes_light_req);
 
-uint8_t send_temp_req(uint8_t srcTaskId);
+uint8_t send_temp_req(uint8_t srcTaskId, msgStruct_t *temp_req, mqd_t qdes_temp_req);
 
 /* Handlers */
 /**

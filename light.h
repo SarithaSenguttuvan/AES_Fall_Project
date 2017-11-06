@@ -16,7 +16,7 @@ void *lightTaskFunc(void *arg);
 
 
 
-uint8_t send_light_msg(uint8_t destTaskId, msgStruct_t * light_msg);
+uint8_t send_light_msg(uint8_t destTaskId, msgStruct_t * light_msg, mqd_t qdes_light);
 
 
 #endif

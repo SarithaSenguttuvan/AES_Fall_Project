@@ -4,20 +4,24 @@
 #include <stdlib.h>
 #include "light.h"
 #include "generic.h"
+#include <stdbool.h>
+
+extern bool sigHandle;
 
 mqd_t qdes_loc_lightTask;
 	
 /* Function call to send the light data */
-uint8_t send_light_msg(uint8_t destTaskId, msgStruct_t * light_msg)
+uint8_t send_light_msg(uint8_t destTaskId, msgStruct_t * light_msg, mqd_t qdes_light)
 {
 	printf("send_light_msg::In function send light msg\n");
-	mqd_t qdes_light;
+	//mqd_t qdes_light;
 	char *lightData = "Day";
 	light_msg->msgId = MSGID_LIGHT_DATA;
 	light_msg->msgSrcTask = LIGHT_TASK_ID;
 	light_msg->msgPayload = lightData;
-	light_msg->msgPayloadLen = sizeof(* light_msg->msgPayload);
+	light_msg->msgPayloadLen = sizeof(*(light_msg->msgPayload));
 
+#if 0
 	if(destTaskId == 1)
 	{
 		if((qdes_light = mq_open(MAIN_TASK_MQ_NAME, O_NONBLOCK | O_WRONLY)) == (mqd_t)-1) 
@@ -39,17 +43,20 @@ uint8_t send_light_msg(uint8_t destTaskId, msgStruct_t * light_msg)
 			printf ("send_light_msg::ERROR No: %d Temperature queue unable to open\n", errno);
 		}
 	}
+#endif
 	if(mq_send(qdes_light, (char *)light_msg, sizeof(msgStruct_t), 0) == -1) 
     {
     	printf ("send_light_msg::ERROR No: %d queue unable to send light data to the task %d\n", errno, destTaskId);
     }
     else
     	printf("send_light_msg::Light message Sent from send_lightmsg to task %d\n", destTaskId);
-    
+
+#if 0    
     if (mq_close (qdes_light) == -1) 
     {
         printf("send_light_msg::ERROR No %d: Closing the Light task queue in send_lightmsg\n",errno);
     }
+#endif 
     return 0;
 }
 
@@ -60,16 +67,28 @@ void *lightTaskFunc(void *arg)
 	int8_t rc = 0;	
 	int8_t n = 0;	
 	int32_t recvSig = 0;   
+    mqd_t qdes_loc_lightMainQueue;
+    mqd_t qdes_lightTask_To_Log;
     	
-	mq_lightTask_notify.sigev_notify = SIGEV_SIGNAL;						//////////////////////////////////////////////////////
+	mq_lightTask_notify.sigev_notify = SIGEV_SIGNAL;						
 	mq_lightTask_notify.sigev_signo = SIGLIGHT;
+
+	if((qdes_loc_lightMainQueue = mq_open(MAIN_TASK_MQ_NAME, O_NONBLOCK | O_WRONLY)) == (mqd_t)-1) 
+	{
+    	printf ("lightTaskFunc::ERROR No: %d Unable to open main queue to send hb response\n", errno);
+    }
 	
 	if((qdes_loc_lightTask = mq_open(LIGHT_TASK_MQ_NAME, O_NONBLOCK | O_RDONLY)) == (mqd_t)-1) 
 	{
     	printf ("lightTaskFunc::ERROR No: %d Unable to open light task\n", errno);
     }	
-    
-    if(mq_notify (qdes_loc_lightTask, &mq_lightTask_notify) == -1)							/////////////////////////////////////////////
+ 
+	if((qdes_lightTask_To_Log = mq_open(LOG_TASK_MQ_NAME, O_NONBLOCK | O_WRONLY)) == (mqd_t)-1) 
+	{
+    	printf ("lightTaskFunc::ERROR No: %d Unable to open log task\n", errno);
+    }
+        
+    if(mq_notify (qdes_loc_lightTask, &mq_lightTask_notify) == -1)							
     {
     	printf("lightTaskFunc::The error number in mq_notify in the Light Task is %d\n", errno);
         if(errno == EBUSY)
@@ -88,10 +107,14 @@ void *lightTaskFunc(void *arg)
 	msgStruct_t *read_light_msg_queue = (msgStruct_t *)malloc(sizeof(msgStruct_t));
 	msgStruct_t *light_msg = (msgStruct_t *)malloc(sizeof(msgStruct_t));
 	msgStruct_t *HB_main = (msgStruct_t *)malloc(sizeof(msgStruct_t));	
-
+	msgStruct_t *lightTaskLogMsg = (msgStruct_t *)malloc(sizeof(msgStruct_t));
 	blockSignals(0);
 	
-	while(1)
+	//printf("light():: Sending log $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n");
+    //send_log(LIGHT_TASK_ID, lightLog, lightTaskLogMsg, qdes_lightTask_To_Log);
+	
+	
+	while(!sigHandle)
 	{
 		
 	   		
@@ -100,7 +123,7 @@ void *lightTaskFunc(void *arg)
         printf("lightTaskFunc::Received Signal after Sigwait:%d\n", recvSig);
             
         
-        if(mq_notify (qdes_loc_lightTask, &mq_lightTask_notify) == -1)							/////////////////////////////////////////////
+        if(mq_notify (qdes_loc_lightTask, &mq_lightTask_notify) == -1)							
 		{
 			printf("lightTask_handler::The error number in mq_notify in the Light Task is %d\n", errno);
 		    if(errno == EBUSY)
@@ -109,7 +132,6 @@ void *lightTaskFunc(void *arg)
 		 
 		do
 		{
-			//printf("Entering here\n");
 			if((mq_receive(qdes_loc_lightTask, (char *)read_light_msg_queue, sizeof(msgStruct_t), NULL)) == -1) 
 			{
 				n = errno;
@@ -117,34 +139,52 @@ void *lightTaskFunc(void *arg)
 			} 
 			else
 			{
-				if(read_light_msg_queue->msgId == MSGID_LIGHT_REQ)												////////////////////////////////
+				if(read_light_msg_queue->msgId == MSGID_LIGHT_REQ)												
 				{
-					//printf("=) Light Req MSG: The Source task ID for the light message queue is %d\n",(read_light_msg_queue->msgSrcTask));
-					//printf("=) Light Req MSG: The src_message_id for the light message queue is %d\n",(read_light_msg_queue->msgId));
-					send_light_msg(read_light_msg_queue->msgSrcTask, light_msg);
+					send_light_msg(read_light_msg_queue->msgSrcTask, light_msg, qdes_loc_lightTask);
 				}
-				else if(read_light_msg_queue->msgId == MSGID_HB_REQ)												////////////////////////////////
+				else if(read_light_msg_queue->msgId == MSGID_HB_REQ)												
 				{
-					send_heartBeat(LIGHT_TASK_ID,HB_main);				
+					send_heartBeat(LIGHT_TASK_ID,HB_main, qdes_loc_lightMainQueue);				
 				}
 			}
 		printf("lightTaskFunc::n = %d\n",n);
 		}while(n != EAGAIN);
 		n = 0;
 	}	
+	
+	printf("???????????????????RECEIVED TERMINATING IN LIGHT TASK\n");
+	
 	free(light_msg);
 	free(HB_main);
 	free(read_light_msg_queue);
+	free(lightLog);
+	free(lightTaskLogMsg);
 
     if (mq_close (qdes_loc_lightTask) == -1) 
     {
         printf("ERROR No %d: Closing the Light task queue\n",errno);
     }
+    if (mq_close (qdes_loc_lightMainQueue) == -1) 
+    {
+        printf("ERROR No %d: Closing the Main task queue from light task\n",errno);
+    }
+    if (mq_close (qdes_lightTask_To_Log) == -1) 
+    {
+        printf("ERROR No %d: Closing the Log task queue from light task\n",errno);
+    }
     if (mq_unlink (LIGHT_TASK_MQ_NAME) == -1) 
     {
         printf("ERROR No: %d Unable to unlink the light queue \n", errno);
     } 
-
-	free(lightLog);
+    if (mq_unlink (MAIN_TASK_MQ_NAME) == -1) 
+    {
+        printf("ERROR No: %d Unable to unlink the main queue \n", errno);
+    } 
+    if (mq_unlink (LOG_TASK_MQ_NAME) == -1) 
+    {
+        printf("ERROR No: %d Unable to unlink the log queue \n", errno);
+    } 
+	
 	pthread_exit(NULL);
 }

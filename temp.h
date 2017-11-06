@@ -15,6 +15,6 @@ void *tempTaskFunc(void *arg);
 
 
 
-uint8_t send_temp_msg(uint8_t destTaskId, msgStruct_t *temp_msg);
+uint8_t send_temp_msg(uint8_t destTaskId, msgStruct_t *temp_msg, mqd_t qdes_temp);
 
 #endif
