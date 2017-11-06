@@ -21,7 +21,7 @@ void my_handler(int signum)
     if((signum == SIGINT) || (signum == SIGTSTP) )               /* If SIGTERM signal */
     {
 		FILE *LEDHandle = NULL;
-		char *LEDBrightness = "/sys/class/leds/beaglebone:green:usr0/brightness";
+		char *LEDBrightness = "/sys/class/leds/beaglebone:green:usr1/brightness";
 
 		if((LEDHandle = fopen(LEDBrightness, "r+")) != NULL){
 		 fwrite("1", sizeof(char), 1, LEDHandle);
