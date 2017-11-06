@@ -13,9 +13,10 @@
 
 #ifndef __I2C_LIGHT__
 #define __I2C_LIGHT__
+#include <stdbool.h>
 
 #define I2C_DEVICE_FILE 			("/dev/i2c-2")
-#define I2C_ADDR					(0x39)
+#define I2C_ADDR_LIGHT				(0x39)
 #define I2C_CONTROL_REG				(0x00)
 #define I2C_ID_REG					(0x0A)
 #define I2C_DATA0_REG				(0x0C)
@@ -35,9 +36,9 @@
 #define ICR_REG_INTR_DIS			(0x00)
 
 typedef enum{
-	I2C_SUCCESS,
-	I2C_FAILURE,
-}I2C_STATE;
+	I2C_LSUCCESS,
+	I2C_LFAILURE,
+}I2C_LSTATE;
 
 /**
  * @brief 
@@ -49,7 +50,7 @@ typedef enum{
  * @return
  * 		The function returns the I2C_STATE enum
  */
-I2C_STATE setup();
+I2C_LSTATE light_setup();
 /**
  * @brief 
  * 		This function is used as an common API to write into the I2C sensor registers
@@ -60,7 +61,7 @@ I2C_STATE setup();
  * @return
  * 		The function returns the I2C_STATE enum
  */
-I2C_STATE write_reg(uint8_t *pointer_reg_val, size_t write_data_length);
+I2C_LSTATE write_reg(uint8_t *pointer_reg_val, size_t write_data_length);
 /**
  * @brief 
  * 		This function is used as an common API to read from the I2C sensor registers
@@ -71,7 +72,7 @@ I2C_STATE write_reg(uint8_t *pointer_reg_val, size_t write_data_length);
  * @return
  * 		The function returns the I2C_STATE enum
  */
-I2C_STATE common_read(uint8_t * read_data, uint8_t read_reg_addr, size_t read_data_length);
+I2C_LSTATE light_common_read(uint8_t * read_data, uint8_t read_reg_addr, size_t read_data_length);
 /**
  * @brief 
  * 		This function is used to write the control register of the I2C sensor
@@ -82,7 +83,7 @@ I2C_STATE common_read(uint8_t * read_data, uint8_t read_reg_addr, size_t read_da
  * @return
  * 		The function returns the I2C_STATE enum
  */
-I2C_STATE write_control_reg(uint8_t value);
+I2C_LSTATE write_control_reg(uint8_t value);
 /**
  * @brief 
  * 		This function is used to read from the control register of the I2C sensor
@@ -93,7 +94,7 @@ I2C_STATE write_control_reg(uint8_t value);
  * @return
  * 		The function returns the I2C_STATE enum
  */
-I2C_STATE read_control_reg(uint8_t *returned_value);
+I2C_LSTATE read_control_reg(uint8_t *returned_value);
 /**
  * @brief 
  * 		This function is used to read the ID of the I2C sensor
@@ -104,7 +105,7 @@ I2C_STATE read_control_reg(uint8_t *returned_value);
  * @return
  * 		The function returns the I2C_STATE enum
  */
-I2C_STATE read_id_reg(uint8_t *returned_value);
+I2C_LSTATE read_id_reg(uint8_t *returned_value);
 /**
  * @brief 
  * 		This function is used to write the timing register of the I2C sensor
@@ -115,7 +116,7 @@ I2C_STATE read_id_reg(uint8_t *returned_value);
  * @return
  * 		The function returns the I2C_STATE enum
  */
-I2C_STATE write_timing_reg(uint8_t value);
+I2C_LSTATE write_timing_reg(uint8_t value);
 /**
  * @brief 
  * 		This function is used to read from the timing register of the I2C sensor
@@ -126,7 +127,7 @@ I2C_STATE write_timing_reg(uint8_t value);
  * @return
  * 		The function returns the I2C_STATE enum
  */
-I2C_STATE read_timing_reg(uint8_t *returned_value);
+I2C_LSTATE read_timing_reg(uint8_t *returned_value);
 /**
  * @brief 
  * 		This function is used to write the ICR register of the I2C sensor
@@ -137,7 +138,7 @@ I2C_STATE read_timing_reg(uint8_t *returned_value);
  * @return
  * 		The function returns the I2C_STATE enum
  */
-I2C_STATE write_icr_reg(uint8_t value);
+I2C_LSTATE write_icr_reg(uint8_t value);
 /**
  * @brief 
  * 		This function is used to read from the ICR register of the I2C sensor
@@ -148,7 +149,7 @@ I2C_STATE write_icr_reg(uint8_t value);
  * @return
  * 		The function returns the I2C_STATE enum
  */
-I2C_STATE read_icr_reg(uint8_t *returned_value);
+I2C_LSTATE read_icr_reg(uint8_t *returned_value);
 /**
  * @brief 
  * 		This function is used to read from the data registers of the I2C sensor
@@ -159,7 +160,7 @@ I2C_STATE read_icr_reg(uint8_t *returned_value);
  * @return
  * 		The function returns the I2C_STATE enum
  */
-I2C_STATE read_data(uint8_t reg_addr, uint16_t *returned_value);
+I2C_LSTATE read_data(uint8_t reg_addr, uint16_t *returned_value);
 /**
  * @brief 
  * 		This function is used to determine the lux value of the I2C sensor
@@ -170,7 +171,8 @@ I2C_STATE read_data(uint8_t reg_addr, uint16_t *returned_value);
  * @return
  * 		The function returns the I2C_STATE enum
  */
-I2C_STATE read_lux(float *lux);
+I2C_LSTATE read_lux(float *lux);
+I2C_LSTATE lux_calculate(uint16_t data0, uint16_t data1, float *lux);
 /**
  * @brief 
  * 		This function is used to determine if it is currently bright or dark
@@ -181,6 +183,6 @@ I2C_STATE read_lux(float *lux);
  * @return
  * 		The function returns the I2C_STATE enum
  */
-I2C_STATE Light_or_dark(bool *light_dark);
+I2C_LSTATE light_or_dark(bool *light_dark);
 
 #endif

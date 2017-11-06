@@ -1,4 +1,15 @@
-/* generic.h */
+/**
+ * @file 
+ *		generic.h 
+ * @brief 
+ *		This file contains function declarations for requesting heart beats and accepting their response
+ *		 
+ * @author 
+ *		Saritha Senguttuvan, Savitha Senguttuvan
+ * @date 
+ *		Nov 4,2017
+ *
+ */
 
 #ifndef INCLUDES_GENERIC_TASK_H_
 #define INCLUDES_GENERIC_TASK_H_
@@ -104,11 +115,33 @@ uint8_t send_log(uint8_t srcTaskId, log_t* logPacket, msgStruct_t *msg, mqd_t ms
  *      uint8_t
  */
 uint8_t send_heartBeat(int8_t srcTaskId, msgStruct_t *HB_main, mqd_t mq_des_hb_resp);
-
+/**
+ * @brief 
+ * 		This function is used to request heartbeat messages 
+ * @param 
+ *		srcTask - Holds the sourcetask ID that sends the logs
+ *		logPacket - holds the log packet of type log_t
+ * @return 
+ *      uint8_t
+ */
 uint8_t send_hb_req(msgStruct_t * HB_req, mqd_t qdes_req_hb_log, mqd_t qdes_req_hb_temp, mqd_t qdes_req_hb_light);
-
+/**
+ * @brief 
+ * 		This function is used to request light data
+ * @param 
+ *		srcTask - Holds the sourcetask ID that sends the logs
+ * @return 
+ *      uint8_t
+ */
 uint8_t send_light_req(uint8_t srcTaskId, msgStruct_t *light_req, mqd_t qdes_light_req);
-
+/**
+ * @brief 
+ * 		This function is used to request temp data
+ * @param 
+ *		srcTask - Holds the sourcetask ID that sends the logs
+ * @return 
+ *      uint8_t
+ */
 uint8_t send_temp_req(uint8_t srcTaskId, msgStruct_t *temp_req, mqd_t qdes_temp_req);
 
 /* Handlers */
@@ -138,9 +171,19 @@ void lightTask_handler(int signum);
  */
 void tempTask_handler(int signum);
 
-
+/**
+ * @brief 
+ * 		This function is used to block the signals
+ * @return 
+ *      none
+ */
 void blockSignals(int taskID);
-
+/**
+ * @brief 
+ * 		This function is used to unblock the signals
+ * @return 
+ *      int32_t
+ */
 int32_t unblockOnSignal(int taskID);
 
 #endif

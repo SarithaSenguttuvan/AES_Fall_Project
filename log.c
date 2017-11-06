@@ -19,12 +19,12 @@ void *logTaskFunc(void *arg)
 	size_t n = 0;
 	int8_t rc = 0;
 	int32_t recvSig = 0;
-	FILE *fp;
-	mqd_t qdes_loc_logMainQueue;
+	FILE *fp;								/* File descriptor */
+	mqd_t qdes_loc_logMainQueue;			/* Msg Queue descriptor */
 	log_t *read_log_queue = (log_t *)malloc(sizeof(log_t));
 	msgStruct_t *read_msg_queue = (msgStruct_t *)malloc(sizeof(msgStruct_t));
 
-	mq_logTask_notify.sigev_notify = SIGEV_SIGNAL;						
+	mq_logTask_notify.sigev_notify = SIGEV_SIGNAL;		/* Notify registration */				
 	mq_logTask_notify.sigev_signo = SIGLOG;
 
 	if((qdes_loc_logMainQueue = mq_open(MAIN_TASK_MQ_NAME, O_NONBLOCK | O_WRONLY)) == (mqd_t)-1) 
@@ -37,7 +37,7 @@ void *logTaskFunc(void *arg)
     	printf ("logTaskFunc::ERROR No: %d Unable to open Log task\n", errno);
     }
     
-    if(mq_notify (qdes_loc_logTask, &mq_logTask_notify) == -1)							
+    if(mq_notify (qdes_loc_logTask, &mq_logTask_notify) == -1)		/* NOtify registration */					
     {
     	printf("logTaskFunc::The error number in mq_notify in the Log Task is %d\n", errno);
         if(errno == EBUSY)
@@ -47,21 +47,20 @@ void *logTaskFunc(void *arg)
 
 	blockSignals(0);
 	#if 1
-	fp = fopen(file_name, "w");
+	fp = fopen(file_name, "w");								/* Open the file name */
     if (fp == NULL) 
     {
       printf("logTaskFunc():: Unable to open the file\n"); 
     }
     #endif
-   // fprintf(fp, "%s\n", "Saritha");
-	while(!sigHandle)
+	while(!sigHandle)										
 	{
 	   		
 		printf("logTaskFunc::Signal Waiting\n");   		
-		recvSig = unblockOnSignal(LOG_TASK_ID);   
+		recvSig = unblockOnSignal(LOG_TASK_ID);   			/* Unblocking the signals */
         printf("logTaskFunc::Received Signal after Sigwait:%d\n", recvSig);
 		   
-		if(mq_notify (qdes_loc_logTask, &mq_logTask_notify) == -1)							
+		if(mq_notify (qdes_loc_logTask, &mq_logTask_notify) == -1)		/* Reregistring the notifications */						
 		{
 			printf("logTask_handler::The error number in mq_notify in the Log Task is %d\n", errno);
 		    if(errno == EBUSY)
@@ -78,33 +77,16 @@ void *logTaskFunc(void *arg)
 			} 
 			else
 			{
-				//printf("logTaskFunc:^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
 				read_log_queue = (log_t *)(read_msg_queue->msgPayload);
 
 				if(read_msg_queue->msgId == MSGID_LOGMSG)												
 				{
-					#if 0
-					printf("***LOG MSG: The Log Source task ID is %d\n",(read_msg_queue->msgSrcTask));
-					printf("***LOG MSG: The Log src_message_id for the main message queue is %d\n",(read_msg_queue->msgId));
-					printf("***LOG MSG: The Log payload is %s\n",(char *)(read_log_queue->logPayload));
-					printf("***LOG MSG: The Log payload len for the main message queue is %ld\n",(read_msg_queue->msgPayloadLen));
-					#endif
-					//write to the file
 					printf("logTaskFunc:: Writing to the file\n");
-					#if 0
-						fp = fopen("AES_Project_Log.txt", "a");
-						if (fp == NULL) 
-						{
-						  printf("logTaskFunc():: Unable to open the file\n"); 
-						}
-					#endif
-					fprintf(fp, "\nMsg Id: %d\n",read_msg_queue->msgId);
-					fprintf(fp, "Src Task Id: %d\n",read_msg_queue->msgSrcTask);
-					fprintf(fp, "Payload: %s\n",(char *)(read_log_queue->logPayload));
-					fprintf(fp, "Payload length: %ld\n",read_msg_queue->msgPayloadLen);
-					printf("logTaskFunc:: Completed writing to the file\n");
-					//fclose(fp);
-										
+					fprintf(fp, "\nMsg Id: %d ",read_msg_queue->msgId);
+					fprintf(fp, "Src Task Id: %d",read_msg_queue->msgSrcTask);
+					fprintf(fp, "Payload: %s",(char *)(read_log_queue->logPayload));
+					//fprintf(fp, "Payload length: %ld\n",read_msg_queue->msgPayloadLen);
+					printf("logTaskFunc:: Completed writing to the file\n");					
 				}
 				else if(read_msg_queue->msgId == MSGID_HB_REQ)												
 				{				
@@ -116,13 +98,14 @@ void *logTaskFunc(void *arg)
 		n = 0;
 	}
 	
-	printf("???????????????????RECEIVED TERMINATING IN LOG TASK\n");
-	
+	printf("RECEIVED TERMINATING IN LOG TASK\n");
+	/* On graceful termination */
+	/* Release mry */
 	fclose(fp);
-	free(HB_main);
+	free(HB_main);		
 	free(read_msg_queue);
 	free(read_log_queue);
-    
+    /* Close the file descriptors */
     if (mq_close (qdes_loc_logTask) == -1) 
     {
         printf("ERROR No %d: Closing the Log task queue\n",errno);

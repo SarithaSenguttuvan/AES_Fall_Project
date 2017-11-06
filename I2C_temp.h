@@ -113,7 +113,7 @@ I2C_STATE read_temp_value(uint16_t *returned_value);
  * @return
  * 		The function returns the int16_t value
  */
-int16_t conversion(int16_t temp);
+float conversion(int16_t temp);
 /**
  * @brief 
  * 		This function is used to enable the shutdowm mode
@@ -147,5 +147,38 @@ I2C_STATE shutdown_disable();
  * 		The function returns the I2C_STATE enum
  */
 I2C_STATE conversion_rate(uint8_t conv_rate);
+/**
+ * @brief 
+ * 		This function is used to change the conversion rate
+ *		
+ * @param 
+ *		8 bit value which specifies the conversion rate
+ * 
+ * @return
+ * 		The function returns the I2C_STATE enum
+ */
+I2C_STATE read_temp_celsius(float *temp_cel_value);
+/**
+ * @brief 
+ * 		This function is used to change the conversion rate
+ *		
+ * @param 
+ *		8 bit value which specifies the conversion rate
+ * 
+ * @return
+ * 		The function returns the I2C_STATE enum
+ */
+I2C_STATE read_temp_kelvin(float *temp_kelvin_value);
+/**
+ * @brief 
+ * 		This function is used to change the conversion rate
+ *		
+ * @param 
+ *		8 bit value which specifies the conversion rate
+ * 
+ * @return
+ * 		The function returns the I2C_STATE enum
+ */
+I2C_STATE read_temp_fahrenheit(float *temp_fahrenhiet_value);
 
 #endif

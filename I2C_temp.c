@@ -19,6 +19,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "I2C_temp.h"
+#include <unistd.h>
 
 int file;
 
@@ -119,18 +120,60 @@ I2C_STATE read_temp_value(uint16_t *returned_value)
 	return I2C_SUCCESS;
 }
 
-int16_t conversion(int16_t temp)
+float conversion(int16_t temp)
 {
 	float mul_val = 1.0;					
 	temp >>= 4;
-	if(temp & 0x800)															/*  If the number is negative */
+	if(temp & 0x800)				/*  If the number is negative */
 	{
 		temp = ~temp;	
 		temp++;
 		mul_val = -1.0;
 	}
-	temp *= TEMP_RESOLUTION;													/* Multiply with 0.0625 */
-	return (int16_t)(temp*mul_val);
+	//temp *= TEMP_RESOLUTION;			/* Multiply with 0.0625 */
+	return (temp*mul_val*TEMP_RESOLUTION);
+}
+
+I2C_STATE read_temp_celsius(float *temp_cel_value)
+{
+	uint16_t temp_returned_value = 0;
+	if((read_temp_value(&temp_returned_value)) == I2C_SUCCESS)
+	{
+		*temp_cel_value = conversion(temp_returned_value);
+		return I2C_SUCCESS;
+	}
+	else
+	{
+		return I2C_FAILURE;
+	}
+}
+
+I2C_STATE read_temp_kelvin(float *temp_kelvin_value)
+{
+	uint16_t temp_returned_value = 0;
+	if((read_temp_value(&temp_returned_value)) == I2C_SUCCESS)
+	{
+		*temp_kelvin_value = (conversion(temp_returned_value) + 273.15);
+		return I2C_SUCCESS;
+	}
+	else
+	{
+		return I2C_FAILURE;
+	}
+}
+
+I2C_STATE read_temp_fahrenheit(float *temp_fahrenhiet_value)
+{
+	uint16_t temp_returned_value = 0;
+	if((read_temp_value(&temp_returned_value)) == I2C_SUCCESS)
+	{
+		*temp_fahrenhiet_value = (((conversion(temp_returned_value))*1.8) + 32);
+		return I2C_SUCCESS;
+	}
+	else
+	{
+		return I2C_FAILURE;
+	}
 }
 
 I2C_STATE shutdown_enable()
@@ -201,85 +244,3 @@ I2C_STATE conversion_rate(uint8_t conv_rate)
 	}
 }
 
-int main()
-{
-	uint16_t config_returned_value = 0;
-	int16_t temp_returned_value = 0;
-
-	if(setup() == I2C_SUCCESS)
-	{
-		printf("Configured I2C\n");
-	}
-	else
-	{
-		printf("Error in configuring I2C\n");
-	}
-
-	if((read_config_value(&config_returned_value)) == I2C_SUCCESS)
-	{
-		printf("The config value is %x\n",config_returned_value);
-	}
-	else
-	{
-		printf("Error in reading config value\n");
-	}
-	
-	if((read_temp_value(&temp_returned_value)) == I2C_SUCCESS)
-	{
-		printf("The temp value is %x\n",temp_returned_value);
-	}
-	else
-	{
-		printf("Error in reading temp value\n");
-	}
-
-	printf("The converted temp value is %d\n",conversion(temp_returned_value));
-
-	if(shutdown_enable() == I2C_SUCCESS)
-	{
-		printf("Shutdown mode enabled\n");
-	}
-	else
-	{
-		printf("Error\n");
-	}
-	config_returned_value = 0;
-	if((read_config_value(&config_returned_value)) == I2C_SUCCESS)
-	{
-		printf("2. The config value is %x\n",config_returned_value);
-	}
-	else
-	{
-		printf("Error in reading config value\n");
-	}
-	if(shutdown_disable() == I2C_SUCCESS)
-	{
-		printf("Shutdown mode disabled\n");
-	}
-	else
-	{
-		printf("Error\n");
-	}
-	config_returned_value = 0;
-	if((read_config_value(&config_returned_value)) == I2C_SUCCESS)
-	{
-		printf("3. The config value is %x\n",config_returned_value);
-	}
-	else
-	{
-		printf("Error in reading config value\n");
-	}
-
-	conversion_rate(CONV_RATE_3);
-	config_returned_value = 0;
-	if((read_config_value(&config_returned_value)) == I2C_SUCCESS)
-	{
-		printf("4. The config value is %x\n",config_returned_value);
-	}
-	else
-	{
-		printf("Error in reading config value\n");
-	}
-
-
-}

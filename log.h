@@ -1,8 +1,14 @@
-/*
- * log.h
+/**
+ * @file 
+ *		log.h 
+ * @brief 
+ *		This file contains function declarations for log functions
+ *		 
+ * @author 
+ *		Saritha Senguttuvan, Savitha Senguttuvan
+ * @date 
+ *		Nov 4,2017
  *
- *  Created on: Oct, 2017
- *      Author: Saritha Senguttuvan, Savitha Senguttuvan
  */
 
 #ifndef INCLUDES_LOGGER_TASK_H_
@@ -23,6 +29,7 @@ typedef enum
 	LOG_ERROR,
 	LOG_DEBUG,
 	LOG_WARN,
+	LOG_INIT,
 	LOG_INFO
 }LOGGER_level;
 
@@ -59,38 +66,5 @@ uint8_t receive_log();
  */
 void logTask_handler(int signum);
 
-#if 0
-
-/**
- * @brief
- *
- * This function displays the logs in the desired format to the file, to log specific events
- *
- * @param Log structure which has to be printed
- * @return none
- */
-void log_item(log_t * data);
-
-/**
- * @brief 
- * 		This function is used to print the string pointing to by a ptr
- * @param 
- *		str - points to the location of the string to be printed
- * @return 
- *      void
- */
-void log_raw_string(uint8_t * str);
-
-/**
- * @brief 
- * 		This function is used to print the integer data 
- * @param 
- *		int_data - holds the integer data to be printed
- * @return 
- *      void
- */
-void log_raw_int(int32_t int_data);
-
-#endif
 
 #endif /* INCLUDES_LOGGER_QUEUE_H_ */
