@@ -77,6 +77,14 @@ void *lightTaskFunc(void *arg)
 	if(light_setup() == I2C_LSUCCESS)
 	{
 		printf("Configured I2C\n");
+		if((write_control_reg(CONTROL_REG_PWR_ON)) == I2C_LSUCCESS)
+		{
+			printf("No error in writing\n");
+		}
+		else
+		{
+			printf("Error in writing\n");
+		}
 	}
 	else
 	{
